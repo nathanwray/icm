@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -226,7 +227,7 @@ public class UserInterface {
       }
 
       if (p.containsKey("dnsTestUrls")) {
-         dnsTestUrls = p.getProperty("dnsTestUrls").split(",");
+         dnsTestUrls = Arrays.stream(p.getProperty("dnsTestUrls").split(",")).map(String::trim).toArray(String[]::new);
       }
 
    }
@@ -556,11 +557,11 @@ public class UserInterface {
 
          // show message box with application version information
 
-         String aboutMessage = "<html><body><H3>Internet Connectivity Monitor</H3>" + "<H4>v2.0 - July 2020</H4>"
-               + "Initial applicaiton developed by <b>Genc Alikaj</b> (<a href='mailto:gencalikaj@gmail.com' style='text-decoration: none'>gencalikaj@gmail.com</a>)<br><br>"
-               + "The following portions were developed/fixed by <b>Jhobanny Morillo</b>:"
+         String aboutMessage = "<html><body><H3>icm</H3>" + "<H4>v2 - July 2020</H4>"
+               + "icm is a hard fork of Internet Connectivity Monitor 1.41 by <b>Genc Alikaj</b> (<a href='mailto:gencalikaj@gmail.com' style='text-decoration: none'>gencalikaj@gmail.com</a>)<br><br>"
+               + "The following portions of Internet Connectivity Monitor developed/fixed by <b>Jhobanny Morillo</b>:"
                + "<ul><li>Disconnections counter</li>" + "<li>Text formatting in log file</li></ul><br>"
-               + "v2.0 The following changed were implemented by <b>Nathan Wray</b>:<ul>"
+               + "icm: The following changed were implemented by <b>Nathan Wray</b>:<ul>"
                + "<li>Removed second thread</li>" + "<li>Added UP/DOWN UI element</li>"
                + "<li>Converted to DNS resolution from socket-based detection (see README)</li>"
                + "<li>Added list of top sites to cycle through</li>" + "<li>Require multiple ("
@@ -569,8 +570,8 @@ public class UserInterface {
                + "<li>Altered outage sound file and volume</li>" + "<li>Made UI smaller</li>"
                + "<li>Separate outage logging and \"Debug\" logging</li>" + "</ul><br>"
 
-               + "For more info and the latest version of the program visit:<br>"
-               + "<a href='http://code.google.com/p/internetconnectivitymonitor/' style='text-decoration: none'>http://code.google.com/p/internetconnectivitymonitor/</a></body></html>";
+               + "For more info and the latest version of icm visit:<br>"
+               + "<a href='https://github.com/nathanwray/icm' style='text-decoration: none'>https://github.com/nathanwray/icm</a></body></html>";
 
          JOptionPane.showMessageDialog(null, aboutMessage, "About Internet Connectivity Monitor",
                JOptionPane.INFORMATION_MESSAGE);
