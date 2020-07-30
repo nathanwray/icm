@@ -52,9 +52,7 @@ public class UserInterface {
    public static int failingTestIntervalSeconds = 1;
    public static int successesAfterFailRequired = 5;
 
-   public static String connectedAudioFile;
    public static URL connectedURL;
-   public static String disconnectedAudioFile;
    public static URL disconnectedURL;
 
    public static String[] dnsTestUrls;
@@ -219,10 +217,6 @@ public class UserInterface {
          } catch (MalformedURLException mfe) {
             System.err.println("Could not parse connectedURL from icm.properties: " + mfe);
          }
-      }
-
-      if (p.containsKey("disconnectedAudioFile")) {
-         disconnectedAudioFile = p.getProperty("disconnectedAudioFile");
       }
 
       if (p.containsKey("disconnectedURL")) {
@@ -590,9 +584,10 @@ public class UserInterface {
 
       InputStream cIs = null;
       Clip clp;
+      String clipPath = "sounds" + File.separator + name;
 
       try {
-         cIs = getClass().getClassLoader().getResourceAsStream(name);
+         cIs = getClass().getClassLoader().getResourceAsStream(clipPath);
 
          clp = AudioSystem.getClip();
          clp.open(AudioSystem.getAudioInputStream(cIs));
@@ -600,7 +595,7 @@ public class UserInterface {
          gain.setValue(gain.getMaximum());
       } catch (Exception e) {
          e.printStackTrace();
-         System.err.println("Could not open audio clip " + name + ": " + e);
+         System.err.println("Could not open audio clip " + clipPath + ": " + e);
          clp = null;
       } finally {
          if (cIs != null) {
