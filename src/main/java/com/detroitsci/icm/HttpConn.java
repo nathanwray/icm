@@ -131,7 +131,7 @@ public class HttpConn implements Runnable {
          UserInterface.DISCONNECTEDPRIMARYSITE = 1;
 
          // perform a disconnection counter check
-         disconnectionObject.clearAudioFile();
+         disconnectionObject.stopAudioFile();
          disconnectionObject.run();
       }
    }

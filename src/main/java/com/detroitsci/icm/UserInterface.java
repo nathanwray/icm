@@ -19,6 +19,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -203,7 +206,11 @@ public class UserInterface {
       }
 
       if (p.containsKey("connectedAudioFile")) {
-         connectedAudioFile = p.getProperty("connectedAudioFile");
+         disconnectionCounter.setConnectedClip(getClip(p.getProperty("connectedAudioFile")));
+      }
+
+      if (p.containsKey("disconnectedAudioFile")) {
+         disconnectionCounter.setDisconnectedClip(getClip(p.getProperty("disconnectedAudioFile")));
       }
 
       if (p.containsKey("connectedURL")) {
@@ -577,6 +584,33 @@ public class UserInterface {
                JOptionPane.INFORMATION_MESSAGE);
 
       }
+   }
+
+   private Clip getClip(String name) {
+
+      InputStream cIs = null;
+      Clip clp;
+
+      try {
+         cIs = getClass().getClassLoader().getResourceAsStream(name);
+
+         clp = AudioSystem.getClip();
+         clp.open(AudioSystem.getAudioInputStream(cIs));
+         FloatControl gain = (FloatControl) clp.getControl(FloatControl.Type.MASTER_GAIN);
+         gain.setValue(gain.getMaximum());
+      } catch (Exception e) {
+         e.printStackTrace();
+         System.err.println("Could not open audio clip " + name + ": " + e);
+         clp = null;
+      } finally {
+         if (cIs != null) {
+            try {
+               cIs.close();
+            } catch (IOException e) {
+            }
+         }
+      }
+      return clp;
    }
 
    class ExitProgram implements ActionListener {

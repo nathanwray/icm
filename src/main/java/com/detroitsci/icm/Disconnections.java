@@ -1,16 +1,14 @@
 package com.detroitsci.icm;
 
 import java.awt.Color;
-import java.io.File;
 
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.FloatControl;
 
 public class Disconnections {
 
    // audio file to play when disconnected
-   Clip clpDisconnected;
+   Clip clpDisconnected = null;
+   Clip clpConnected = null;
 
    public synchronized void run() {
 
@@ -26,18 +24,10 @@ public class Disconnections {
 
          // play sound when disconnected (when counter goes up by one)
          if (UserInterface.CHKPLAYSOUND.isSelected() == true) {
-            try {
-               Clip clpDisconnected = AudioSystem.getClip();
-               clpDisconnected
-                     .open(AudioSystem.getAudioInputStream(new File("sounds" + File.separator + "goddamnit.wav")));
-               FloatControl gain = (FloatControl) clpDisconnected.getControl(FloatControl.Type.MASTER_GAIN);
-               gain.setValue(gain.getMaximum());
-
+            if (clpDisconnected != null) {
+               clpDisconnected.stop();
+               clpDisconnected.setFramePosition(0);
                clpDisconnected.start();
-            } catch (Exception e) {
-               e.printStackTrace();
-               UserInterface.DEBUG_OUTPUT
-                     .append("(Information) Cannot play sound" + System.getProperty("line.separator"));
             }
          }
       } else if (UserInterface.DISCONNECTEDPRIMARYSITE == (byte) 0 & UserInterface.SAMEDISCONNECTION == (byte) 1) {
@@ -48,18 +38,10 @@ public class Disconnections {
          UserInterface.LBLCURRENTSTATE.setForeground(UserInterface.DARK_GREEN);
 
          if (UserInterface.CHKPLAYSOUND.isSelected() == true) {
-            try {
-               Clip clpDisconnected = AudioSystem.getClip();
-               clpDisconnected
-                     .open(AudioSystem.getAudioInputStream(new File("sounds" + File.separator + "connected.wav")));
-               FloatControl gain = (FloatControl) clpDisconnected.getControl(FloatControl.Type.MASTER_GAIN);
-               gain.setValue(((gain.getMaximum() - gain.getMinimum()) / 2) + gain.getMinimum());
-
-               clpDisconnected.start();
-            } catch (Exception e) {
-               e.printStackTrace();
-               UserInterface.DEBUG_OUTPUT
-                     .append("(Information) Cannot play sound" + System.getProperty("line.separator"));
+            if (clpConnected != null) {
+               clpConnected.stop();
+               clpConnected.setFramePosition(0);
+               clpConnected.start();
             }
          }
       } else if (UserInterface.SAMEDISCONNECTION == (byte) 1) {
@@ -72,27 +54,29 @@ public class Disconnections {
             UserInterface.LBLCURRENTSTATE.setText("DOWN");
             UserInterface.LBLCURRENTSTATE.setForeground(Color.RED);
          }
-      }
 
-      // loop disconnection sound if option is selected.
-      if (UserInterface.CHKPLAYSOUNDLOOP.isSelected() == true & UserInterface.SAMEDISCONNECTION == (byte) 1) {
-
-         try {
-            clpDisconnected = AudioSystem.getClip();
-            clpDisconnected
-                  .open(AudioSystem.getAudioInputStream(new File("sounds" + File.separator + "disconnected.wav")));
+         // loop disconnection sound if option is selected.
+         if (UserInterface.CHKPLAYSOUNDLOOP.isSelected() == true && clpDisconnected != null
+               && (!clpDisconnected.isRunning())) {
+            clpDisconnected.stop();
+            clpDisconnected.setFramePosition(0);
             clpDisconnected.start();
-         } catch (Exception e) {
-            UserInterface.DEBUG_OUTPUT.append("(Information) Cannot play sound" + System.getProperty("line.separator"));
          }
       }
 
    }
 
    // free clip memory resources
-   public synchronized void clearAudioFile() {
-      clpDisconnected = null;
-      System.gc();
+   public synchronized void stopAudioFile() {
+      if (clpDisconnected != null)
+         clpDisconnected.stop();
    }
 
+   public void setConnectedClip(Clip clip) {
+      clpConnected = clip;
+   }
+
+   public void setDisconnectedClip(Clip clip) {
+      clpDisconnected = clip;
+   }
 }
