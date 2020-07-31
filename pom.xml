@@ -5,8 +5,8 @@
 	<!-- Output to jar format -->
 	<packaging>jar</packaging>
 	<version>2.0.2</version>
-	<name>Internet Connectivity Monitor</name>
-	<description>DNS-based Internet Connectivity Monitor</description>
+	<name>Internet Connectivity Monitoring</name>
+	<description>DNS-based Internet Connectivity Monitoring, monitors your internet connection and logs each outage wiht options for notification and alerting</description>
 	<properties>
 		<project.main.class>com.detroitsci.icm.UserInterface</project.main.class>
 	</properties>

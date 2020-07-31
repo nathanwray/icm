@@ -548,21 +548,20 @@ public class UserInterface {
 
          // show message box with application version information
 
-         String aboutMessage = "<html><body><H3>icm</H3>" + "<H4>v2 - July 2020</H4>"
-               + "icm is a hard fork of Internet Connectivity Monitor 1.41 by <b>Genc Alikaj</b> (<a href='mailto:gencalikaj@gmail.com' style='text-decoration: none'>gencalikaj@gmail.com</a>)<br><br>"
-               + "The following portions of Internet Connectivity Monitor developed/fixed by <b>Jhobanny Morillo</b>:"
-               + "<ul><li>Disconnections counter</li>" + "<li>Text formatting in log file</li></ul><br>"
-               + "icm: The following changed were implemented by <b>Nathan Wray</b>:<ul>"
-               + "<li>Removed second thread</li>" + "<li>Added UP/DOWN UI element</li>"
+         String aboutMessage = "<html><body><H4>icm - Internet Connectivity Monitoring</H4>" + "Changes since fork:<br>"
+               + "<ul>" + "<li>Removed second thread</li>" + "<li>Added UP/DOWN UI element</li>"
                + "<li>Converted to DNS resolution from socket-based detection (see README)</li>"
                + "<li>Added list of top sites to cycle through</li>" + "<li>Require multiple ("
                + successesAfterFailRequired + ") successes before cycling to UP</li>" + "<li>Cycle faster ("
-               + failingTestIntervalSeconds + " sec) while down</li>" + "<li>Sound plays when reconnected</li>"
+               + failingTestIntervalSeconds + " sec) while down</li>"
+               + "<li>(Optional) Sound plays when disconnected/reconnected</li>"
+               + "<li>(Optional) URL accessed when disconnected/reconnected</li>"
                + "<li>Altered outage sound file and volume</li>" + "<li>Made UI smaller</li>"
                + "<li>Separate outage logging and \"Debug\" logging</li>" + "</ul><br>"
-
                + "For more info and the latest version of icm visit:<br>"
-               + "<a href='https://github.com/nathanwray/icm' style='text-decoration: none'>https://github.com/nathanwray/icm</a></body></html>";
+               + "<a href='https://github.com/nathanwray/icm' style='text-decoration: none'>https://github.com/nathanwray/icm</a><br><br>"
+               + "icm is a hard fork of Internet Connectivity Monitor 1.41 by <b>Genc Alikaj</b><br>"
+               + "</body></html>";
 
          JOptionPane.showMessageDialog(null, aboutMessage, "About Internet Connectivity Monitor",
                JOptionPane.INFORMATION_MESSAGE);
