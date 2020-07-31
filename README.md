@@ -1,5 +1,5 @@
 # icm
-icm (Internet Connectivity Monitoring) monitors your internet connectivity and logs each outage. It will optionally play .wav files and/or hit GET endpoints on connect and disconnect.<br/>
+icm (Internet Connectivity Monitoring) monitors your internet connectivity uptime and logs each outage. It will optionally play .wav files and/or hit GET endpoints on connect and disconnect.<br/>
 
 Connectivity is monitored by testing DNS resolution every 7 seconds, and on failure, it will test every 1 second until it has succeeded 5 times.
 Values, sound clips and urls are configurable in the properties file.<br/>
