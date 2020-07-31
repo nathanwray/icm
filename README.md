@@ -7,6 +7,7 @@ Values, sound clips and urls are configurable in the properties file.<br/>
 Note that if your router or internal infrastructure caches DNS, resolution will not successfully verify your internet connection. 
 I suggest setting your local machine to use a remote DNS server rather than your router in this case, such as Google DNS (https://developers.google.com/speed/public-dns).
 <br/>
+<p/>
 In process:<br/>
 <ul>
 <li>
