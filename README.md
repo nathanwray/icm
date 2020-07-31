@@ -1,5 +1,5 @@
 # icm
-icm watches your internet connectivity and logs each outage. It will optionally play .wav files on connect and disconnect.
+icm monitors your internet connectivity and logs each outage. It will optionally play .wav files on connect and disconnect.
 This is a hard fork of "Internet Connectivity Montitor" 1.41 with many fundamental changes (see https://code.google.com/archive/p/internetconnectivitymonitor/).
 It includes source from jhlabs, please see http://www.jhlabs.com/java/layout/.<br/>
 
