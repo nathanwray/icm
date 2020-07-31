@@ -6,9 +6,9 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,13 +132,16 @@ public class UserInterface {
 
    JPanel pnlAbout = new JPanel();
 
+   private static String startupLog = "";
+   public static final String LSEP = System.getProperty("line.separator");
+
    // here is where everything starts
    public static void main(String[] args) {
 
       UserInterface start = new UserInterface();
       start.loadProperties();
       start.BuildInterface();
-
+      DEBUG_OUTPUT.append(startupLog);
    }
 
    private void loadProperties() {
@@ -153,18 +156,17 @@ public class UserInterface {
          if (is != null) {
             p.load(is);
          } else {
-            throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
+            startupLog += "Unable to load property file " + propFileName + LSEP;
          }
 
       } catch (Exception e) {
-         System.out.println("Exception: " + e);
+         startupLog += "Exception loading property file: " + e + LSEP;
       } finally {
          try {
             if (is != null) {
                is.close();
             }
          } catch (Exception e) {
-            e.printStackTrace();
          }
       }
 
@@ -173,7 +175,7 @@ public class UserInterface {
             File f = new File(p.getProperty("disconnectLogPath"));
             disconnectLogPath = f.getCanonicalPath();
          } catch (IOException ioe) {
-            System.err.println("Could not parse disconnectLogPath from icm.properties: " + ioe);
+            startupLog += "Could not parse disconnectLogPath from icm.properties: " + ioe + LSEP;
          }
       }
 
@@ -183,7 +185,7 @@ public class UserInterface {
          try {
             defaultTestIntervalSeconds = Integer.parseInt(p.getProperty("defaultTestIntervalSeconds"));
          } catch (NumberFormatException nfe) {
-            System.err.println("Could not parse defaultTestIntervalSeconds from icm.properties: " + nfe);
+            startupLog += "Could not parse defaultTestIntervalSeconds from icm.properties: " + nfe + LSEP;
          }
       }
 
@@ -191,7 +193,7 @@ public class UserInterface {
          try {
             failingTestIntervalSeconds = Integer.parseInt(p.getProperty("failingTestIntervalSeconds"));
          } catch (NumberFormatException nfe) {
-            System.err.println("Could not parse failingTestIntervalSeconds from icm.properties: " + nfe);
+            startupLog += "Could not parse failingTestIntervalSeconds from icm.properties: " + nfe + LSEP;
          }
       }
 
@@ -199,23 +201,27 @@ public class UserInterface {
          try {
             successesAfterFailRequired = Integer.parseInt(p.getProperty("successesAfterFailRequired"));
          } catch (NumberFormatException nfe) {
-            System.err.println("Could not parse successesAfterFailRequired from icm.properties: " + nfe);
+            startupLog += "Could not parse successesAfterFailRequired from icm.properties: " + nfe + LSEP;
          }
       }
 
       if (p.containsKey("connectedAudioFile")) {
          disconnectionCounter.setConnectedClip(getClip(p.getProperty("connectedAudioFile")));
+      } else {
+         startupLog += "Connected audio file not specified" + LSEP;
       }
 
       if (p.containsKey("disconnectedAudioFile")) {
          disconnectionCounter.setDisconnectedClip(getClip(p.getProperty("disconnectedAudioFile")));
+      } else {
+         startupLog += "Disconnected audio file not specified" + LSEP;
       }
 
       if (p.containsKey("connectedURL")) {
          try {
             connectedURL = new URL(p.getProperty("connectedURL"));
          } catch (MalformedURLException mfe) {
-            System.err.println("Could not parse connectedURL from icm.properties: " + mfe);
+            startupLog += "Could not parse connectedURL from icm.properties: " + mfe + LSEP;
          }
       }
 
@@ -223,12 +229,15 @@ public class UserInterface {
          try {
             disconnectedURL = new URL(p.getProperty("disconnectedURL"));
          } catch (MalformedURLException mfe) {
-            System.err.println("Could not parse disconnectedURL from icm.properties: " + mfe);
+            startupLog += "Could not parse disconnectedURL from icm.properties: " + mfe + LSEP;
          }
       }
 
       if (p.containsKey("dnsTestUrls")) {
          dnsTestUrls = Arrays.stream(p.getProperty("dnsTestUrls").split(",")).map(String::trim).toArray(String[]::new);
+         startupLog += "Using " + dnsTestUrls.length + " test URLs from icm.properties" + LSEP;
+      } else {
+         startupLog += "No DNS Test URLs found in icm.properties" + LSEP;
       }
 
    }
@@ -298,12 +307,6 @@ public class UserInterface {
 
       pnlAddress.setLayout(new BasicGridLayout(1, 2));
 
-//      pnlFrequency.setPreferredSize(new Dimension(230, 20));
-//      pnlFrequency.setLayout(new BasicGridLayout(1, 3));
-//      pnlFrequency.add(lblFrequency);
-//      pnlFrequency.add(txtFrequency);
-//      pnlFrequency.add(lblSeconds);
-
       pnlPlaySound.setLayout(new BasicGridLayout(1, 1));
       pnlPlaySound.add(CHKPLAYSOUND);
       CHKPLAYSOUND.doClick();
@@ -342,7 +345,6 @@ public class UserInterface {
       pnlLeftSide.add(pnlMonitorButton);
       pnlLeftSide.add(pnlBlankAfterMonitorButton);
       pnlLeftSide.add(pnlDisconnections);
-      // pnlLeftSide.add(pnlBlankAfterDisconnectionsCounter);
       pnlLeftSide.add(Box.createVerticalStrut(5));
       pnlLeftSide.add(new JSeparator(SwingConstants.HORIZONTAL));
       pnlLeftSide.add(Box.createVerticalStrut(5));
@@ -395,15 +397,10 @@ public class UserInterface {
          frame.requestFocus();
 
          btnMonitor.setText("Pause Monitoring");
-         OUTPUT.append("Monitoring started " + String.format("%ta %<tb %<td %<tT", new Date())
-               + System.getProperty("line.separator"));
+         OUTPUT.append("Monitoring started " + String.format("%ta %<tb %<td %<tT", new Date()) + LSEP);
 
          List<String> nameServers = ResolverConfiguration.open().nameservers();
-         nameServers.forEach(
-               (dns) -> DEBUG_OUTPUT.append("Using name server: " + dns + System.getProperty("line.separator")));
-
-         DEBUG_OUTPUT.append(
-               "Using " + dnsTestUrls.length + " test URLs from icm.properties" + System.getProperty("line.separator"));
+         nameServers.forEach((dns) -> DEBUG_OUTPUT.append("Using name server: " + dns + LSEP));
 
          CHKPLAYSOUND.setEnabled(false);
          CHKPLAYSOUNDLOOP.setEnabled(false);
@@ -437,8 +434,7 @@ public class UserInterface {
             netThread.suspend();
          } catch (Exception e) {
             e.printStackTrace();
-            DEBUG_OUTPUT.append("ERROR: Primary monitor thread suspend exception" + System.getProperty("line.separator")
-                  + System.getProperty("line.separator"));
+            DEBUG_OUTPUT.append("ERROR: Primary monitor thread suspend exception" + LSEP + LSEP);
          }
 
          netRun.setFlag((byte) 1);
@@ -458,8 +454,7 @@ public class UserInterface {
 
          // re-enable user interface elements
          btnMonitor.setText("Resume Monitoring");
-         OUTPUT.append("Monitoring stopped by user" + System.getProperty("line.separator")
-               + System.getProperty("line.separator"));
+         OUTPUT.append("Monitoring stopped by user" + LSEP + LSEP);
 
          OUTPUT.setEditable(true);
 
@@ -514,12 +509,10 @@ public class UserInterface {
             bw.flush();
             bw.close();
          } catch (IOException e) {
-            DEBUG_OUTPUT.append("File write error. The file is unavailable or read-only."
-                  + System.getProperty("line.separator") + System.getProperty("line.separator"));
+            DEBUG_OUTPUT.append("File write error. The file is unavailable or read-only." + LSEP + LSEP);
             e.printStackTrace();
          } catch (NullPointerException e) {
-            UserInterface.DEBUG_OUTPUT
-                  .append("Save file dialog canceled. File was not saved." + System.getProperty("line.separator"));
+            UserInterface.DEBUG_OUTPUT.append("Save file dialog canceled. File was not saved." + LSEP);
          }
       }
    }
@@ -582,25 +575,28 @@ public class UserInterface {
 
    private Clip getClip(String name) {
 
-      InputStream cIs = null;
+      BufferedInputStream bIs = null;
       Clip clp;
-      String clipPath = "sounds" + File.separator + name;
 
       try {
-         cIs = getClass().getClassLoader().getResourceAsStream(clipPath);
+         bIs = new BufferedInputStream(getClass().getClassLoader().getResourceAsStream(name));
 
          clp = AudioSystem.getClip();
-         clp.open(AudioSystem.getAudioInputStream(cIs));
+         clp.open(AudioSystem.getAudioInputStream(bIs));
          FloatControl gain = (FloatControl) clp.getControl(FloatControl.Type.MASTER_GAIN);
          gain.setValue(gain.getMaximum());
       } catch (Exception e) {
          e.printStackTrace();
-         System.err.println("Could not open audio clip " + clipPath + ": " + e);
+         startupLog += "Could not open audio clip " + name + ": " + e + LSEP;
+         Throwable cause = e;
+         while ((cause = cause.getCause()) != null) {
+            startupLog += "  caused by: " + cause + LSEP;
+         }
          clp = null;
       } finally {
-         if (cIs != null) {
+         if (bIs != null) {
             try {
-               cIs.close();
+               bIs.close();
             } catch (IOException e) {
             }
          }
