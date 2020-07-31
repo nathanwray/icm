@@ -15,5 +15,5 @@ In process:<br/>
 </ul>
 
 <h2>Credits</h2>
-This is a hard fork of "Internet Connectivity Montitor" 1.41 with many fundamental changes (see https://code.google.com/archive/p/internetconnectivitymonitor/).
+This is a hard fork of "Internet Connectivity Montitor" 1.41 with many fundamental changes (see https://code.google.com/archive/p/internetconnectivitymonitor/).<br/>
 It includes source from jhlabs, please see http://www.jhlabs.com/java/layout/.<br/>
