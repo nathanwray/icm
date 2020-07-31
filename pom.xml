@@ -4,8 +4,8 @@
 	<artifactId>icm</artifactId>
 	<!-- Output to jar format -->
 	<packaging>jar</packaging>
-	<version>2.0.1</version>
-	<name>InternetConnectivityMonitor</name>
+	<version>2.0.2</version>
+	<name>Internet Connectivity Monitor</name>
 	<description>DNS-based Internet Connectivity Monitor</description>
 	<properties>
 		<project.main.class>com.detroitsci.icm.UserInterface</project.main.class>

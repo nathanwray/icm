@@ -52,9 +52,6 @@ public class UserInterface {
    public static int failingTestIntervalSeconds = 1;
    public static int successesAfterFailRequired = 5;
 
-   public static URL connectedURL;
-   public static URL disconnectedURL;
-
    public static String[] dnsTestUrls;
    // PROPERTIES
 
@@ -219,7 +216,7 @@ public class UserInterface {
 
       if (p.containsKey("connectedURL")) {
          try {
-            connectedURL = new URL(p.getProperty("connectedURL"));
+            disconnectionCounter.setConnectedUrl(new URL(p.getProperty("connectedURL")));
          } catch (MalformedURLException mfe) {
             startupLog += "Could not parse connectedURL from icm.properties: " + mfe + LSEP;
          }
@@ -227,7 +224,7 @@ public class UserInterface {
 
       if (p.containsKey("disconnectedURL")) {
          try {
-            disconnectedURL = new URL(p.getProperty("disconnectedURL"));
+            disconnectionCounter.setDisconnectedUrl(new URL(p.getProperty("disconnectedURL")));
          } catch (MalformedURLException mfe) {
             startupLog += "Could not parse disconnectedURL from icm.properties: " + mfe + LSEP;
          }
