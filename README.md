@@ -1,8 +1,8 @@
 # icm
-icm (Internet Connectivity Monitoring) monitors your internet connectivity uptime and logs each outage. If your internet has been unstable or unreliable icm can help identify how often and for how long your connection is down. It will optionally play .wav files and/or hit GET endpoints on connect and disconnect. Although a windows executable is provided, it is 100% java and should be portable across platforms via the jar distribution.<br/>
+icm (Internet Connectivity Monitoring) monitors your internet connection uptime and logs each outage. If your internet has been unstable or unreliable icm can help identify how often and for how long your connection is down. It will optionally play .wav files and/or hit GET endpoints on connect and disconnect. Although a windows executable is provided, it is 100% java and should be portable across platforms via the jar distribution.<br/>
 
 Connectivity is monitored by testing DNS resolution every 7 seconds, and on failure, it will test every 1 second until it has succeeded 5 times.
-Values, sound clips and urls are configurable in the properties file.<br/>
+Values, sound clips and urls are configurable in the properties file. By default, it will create a "log" folder in the current directory on startup. This can be altered via the UI "save path" setting.<br/>
 
 Note that if your router or internal infrastructure caches DNS, resolution will not successfully verify your internet connection. 
 I suggest setting your local machine to use a remote DNS server rather than your router in this case, such as Google DNS (https://developers.google.com/speed/public-dns).
