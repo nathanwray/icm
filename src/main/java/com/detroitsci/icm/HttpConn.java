@@ -4,9 +4,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Date;
+
+import org.xbill.DNS.Cache;
+import org.xbill.DNS.ExtendedResolver;
+import org.xbill.DNS.Lookup;
+import org.xbill.DNS.Record;
 
 public class HttpConn implements Runnable {
 
@@ -17,6 +21,8 @@ public class HttpConn implements Runnable {
    String objectName = "Primary";
 
    Disconnections disconnectionObject;
+   Cache cache;
+   ExtendedResolver resolver;
 
    // private String address;
    private int addressOffset = 0;
@@ -26,7 +32,7 @@ public class HttpConn implements Runnable {
    // (many false negatives; walmart, apple, ebay all seem to fail this 100%)
    private boolean testReachable = false;
 
-   private static final int REACHABLE_MAX_WAIT_MILLIS = 30000;
+   private static final int REACHABLE_MAX_WAIT_MILLIS = 5000;
 
    // using a custom constructor that assigns a name to this object
    // and brings a reference to the Disconnections class
@@ -41,10 +47,23 @@ public class HttpConn implements Runnable {
    // Process depends on byte flag at the top of the class.
    public void run() {
 
-      java.security.Security.setProperty("networkaddress.cache.ttl", "0");
-      java.security.Security.setProperty("networkaddress.cache.negative.ttl", "0");
-      System.setProperty("sun.net.inetaddr.ttl", "0");
-      System.setProperty("sun.net.inetaddr.negative.ttl", "0");
+//      java.security.Security.setProperty("networkaddress.cache.ttl", "0");
+//      java.security.Security.setProperty("networkaddress.cache.negative.ttl", "0");
+//      System.setProperty("sun.net.inetaddr.ttl", "0");
+//      System.setProperty("sun.net.inetaddr.negative.ttl", "0");
+
+      cache = new Cache();
+      cache.setMaxEntries(0);
+      try {
+         resolver = new ExtendedResolver(UserInterface.nameservers);
+         resolver.setRetries(2);
+         resolver.setTimeout(3, 0);
+         resolver.setLoadBalance(true);
+         resolver.setTCP(true);
+      } catch (UnknownHostException uhe) {
+         UserInterface.DEBUG_OUTPUT.append("Exception creating resolver, cannot continue: " + uhe + UserInterface.LSEP);
+         runFlag = 0;
+      }
 
       while (runFlag == 0) {
          long startedAt = new Date().getTime();
@@ -59,7 +78,7 @@ public class HttpConn implements Runnable {
          try {
             Thread.sleep(waitMilliseconds);
          } catch (Exception ex) {
-            UserInterface.DEBUG_OUTPUT.append("Thread.sleep exception on CATCH" + System.getProperty("line.separator"));
+            UserInterface.DEBUG_OUTPUT.append("Thread.sleep exception on CATCH" + UserInterface.LSEP);
          }
       }
    }
@@ -88,17 +107,18 @@ public class HttpConn implements Runnable {
       try {
 
          // define URL and try to connect to server
-         InetAddress ip = InetAddress.getByName(new URL(address).getHost());
-         UserInterface.DEBUG_OUTPUT.append("Address for " + address + " is " + ip.getHostAddress());
-
-         if (testReachable) {
-            if (!ip.isReachable(REACHABLE_MAX_WAIT_MILLIS)) {
-               UserInterface.DEBUG_OUTPUT.append(System.getProperty("line.separator"));
-               throw new IOException(address + " not reachable");
-            }
-            UserInterface.DEBUG_OUTPUT.append(" (reachable)");
+         // InetAddress ip = InetAddress.getByName(new URL(address).getHost());
+         Lookup lookup = new Lookup(address);
+         lookup.setResolver(resolver);
+         lookup.setCache(cache);
+         Record[] records = lookup.run();
+         int result = lookup.getResult();
+         if (result != Lookup.SUCCESSFUL) {
+            throw new IOException(lookup.getErrorString());
+         } else if (records == null) {
+            throw new IOException("No records found");
          }
-         UserInterface.DEBUG_OUTPUT.append(System.getProperty("line.separator"));
+         UserInterface.DEBUG_OUTPUT.append("Address for " + address + " is " + records[0].rdataToString() + UserInterface.LSEP);
 
          if (UserInterface.primaryResumeSuccessesRemaining > 0) {
             UserInterface.primaryResumeSuccessesRemaining--;
@@ -106,8 +126,7 @@ public class HttpConn implements Runnable {
             String date = String.format("%ta %<tb %<td %<tT", downSince);
             long downSeconds = (new Date().getTime() - downSince.getTime()) / 1000;
 
-            UserInterface.OUTPUT
-                  .append(date + ": system down " + downSeconds + " seconds" + System.getProperty("line.separator"));
+            UserInterface.OUTPUT.append(date + ": system down " + downSeconds + " seconds" + UserInterface.LSEP);
             // write or update the automatic log file if the option is selected
             AutoWriteLogFile();
 
@@ -119,7 +138,7 @@ public class HttpConn implements Runnable {
          disconnectionObject.run();
 
       } catch (Exception e) {
-         UserInterface.DEBUG_OUTPUT.append("Exception testing " + address + System.getProperty("line.separator"));
+         UserInterface.DEBUG_OUTPUT.append("Exception testing " + address + ": " + e + UserInterface.LSEP);
 
          if (downSince == null) {
             downSince = new Date();
@@ -158,12 +177,11 @@ public class HttpConn implements Runnable {
             bw.close();
 
          } catch (Exception e) {
-            UserInterface.DEBUG_OUTPUT.append(System.getProperty("line.separator")
-                  + "Cannot automatically create or write to file. Please check path."
-                  + System.getProperty("line.separator"));
+            UserInterface.DEBUG_OUTPUT.append(UserInterface.LSEP
+                  + "Cannot automatically create or write to file. Please check path." + UserInterface.LSEP);
             UserInterface.DEBUG_OUTPUT
                   .append("It's possible that access to the selected location is denied. Try using a different path."
-                        + System.getProperty("line.separator") + System.getProperty("line.separator"));
+                        + UserInterface.LSEP + UserInterface.LSEP);
             e.printStackTrace();
             // stop trying to automatically write to file if it's not accessible
             fileLocked = 1;

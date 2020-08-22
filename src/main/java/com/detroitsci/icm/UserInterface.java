@@ -16,7 +16,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Properties;
 
 import javax.sound.sampled.AudioSystem;
@@ -42,8 +41,6 @@ import javax.swing.text.DefaultCaret;
 
 import com.jhlabs.awt.BasicGridLayout;
 
-import sun.net.dns.ResolverConfiguration;
-
 public class UserInterface {
 
    // PROPERTIES can be overridden in property file
@@ -53,6 +50,9 @@ public class UserInterface {
    public static int successesAfterFailRequired = 5;
 
    public static String[] dnsTestUrls;
+   public static String[] nameservers;
+public static String buildVersion;
+public static String projectName;
    // PROPERTIES
 
    public static int primaryResumeSuccessesRemaining = 0;
@@ -82,7 +82,7 @@ public class UserInterface {
    JScrollPane scrDebug = new JScrollPane(DEBUG_OUTPUT);
 
    // user interface elements
-   JFrame frame = new JFrame("Internet Connectivity Monitor v2.0");
+   JFrame frame;
    JButton btnMonitor = new JButton("Start Monitoring");
    JButton btnClear = new JButton("Clear Log");
    JButton btnSave = new JButton("Save Log");
@@ -137,7 +137,7 @@ public class UserInterface {
 
       UserInterface start = new UserInterface();
       start.loadProperties();
-      start.BuildInterface();
+      start.buildInterface();
       DEBUG_OUTPUT.append(startupLog);
    }
 
@@ -153,7 +153,7 @@ public class UserInterface {
          if (is != null) {
             p.load(is);
          } else {
-            startupLog += "Unable to load property file " + propFileName + LSEP;
+            startupLog += "! Unable to load property file " + propFileName + LSEP;
          }
 
       } catch (Exception e) {
@@ -177,7 +177,6 @@ public class UserInterface {
       }
 
       if (p.containsKey("defaultTestIntervalSeconds"))
-
       {
          try {
             defaultTestIntervalSeconds = Integer.parseInt(p.getProperty("defaultTestIntervalSeconds"));
@@ -204,14 +203,10 @@ public class UserInterface {
 
       if (p.containsKey("connectedAudioFile")) {
          disconnectionCounter.setConnectedClip(getClip(p.getProperty("connectedAudioFile")));
-      } else {
-         startupLog += "Connected audio file not specified" + LSEP;
       }
 
       if (p.containsKey("disconnectedAudioFile")) {
          disconnectionCounter.setDisconnectedClip(getClip(p.getProperty("disconnectedAudioFile")));
-      } else {
-         startupLog += "Disconnected audio file not specified" + LSEP;
       }
 
       if (p.containsKey("connectedURL")) {
@@ -234,12 +229,27 @@ public class UserInterface {
          dnsTestUrls = Arrays.stream(p.getProperty("dnsTestUrls").split(",")).map(String::trim).toArray(String[]::new);
          startupLog += "Using " + dnsTestUrls.length + " test URLs from icm.properties" + LSEP;
       } else {
-         startupLog += "No DNS Test URLs found in icm.properties" + LSEP;
+         startupLog += "! No DNS Test URLs found in icm.properties" + LSEP;
+      }
+
+      if (p.containsKey("nameservers")) {
+         nameservers = Arrays.stream(p.getProperty("nameservers").split(",")).map(String::trim).toArray(String[]::new);
+         startupLog += "Using " + nameservers.length + " nameservers from icm.properties" + LSEP;
+      } else {
+         startupLog += "! No nameservers found in icm.properties" + LSEP;
+      }
+	  
+      if (p.containsKey("buildVersion")) {
+         buildVersion = p.getProperty("buildVersion");
+      }
+
+      if (p.containsKey("projectName")) {
+         projectName = p.getProperty("projectName");
       }
 
    }
 
-   private void BuildInterface() {
+   private void buildInterface() {
 
       try {
          UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
@@ -250,6 +260,8 @@ public class UserInterface {
       }
 
       // format user interface elements
+
+	frame =   new JFrame(projectName + " v" + buildVersion);
 
       lblDisconnectionsLabel.setFont(new Font("Arial", Font.PLAIN, 18));
       lblDisconnectionsLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -396,8 +408,7 @@ public class UserInterface {
          btnMonitor.setText("Pause Monitoring");
          OUTPUT.append("Monitoring started " + String.format("%ta %<tb %<td %<tT", new Date()) + LSEP);
 
-         List<String> nameServers = ResolverConfiguration.open().nameservers();
-         nameServers.forEach((dns) -> DEBUG_OUTPUT.append("Using name server: " + dns + LSEP));
+         Arrays.asList(nameservers).forEach((dns) -> DEBUG_OUTPUT.append("Using name server: " + dns + LSEP));
 
          CHKPLAYSOUND.setEnabled(false);
          CHKPLAYSOUNDLOOP.setEnabled(false);
@@ -548,22 +559,23 @@ public class UserInterface {
 
          // show message box with application version information
 
-         String aboutMessage = "<html><body><H4>icm - Internet Connectivity Monitoring</H4>" + "Changes since fork:<br>"
+         String aboutMessage = "<html><body><H4>"+projectName+" v"+buildVersion+"</H4>" + "Changes since fork:<br>"
                + "<ul>" + "<li>Removed second thread</li>" + "<li>Added UP/DOWN UI element</li>"
-               + "<li>Converted to DNS resolution from socket-based detection (see README)</li>"
-               + "<li>Added list of top sites to cycle through</li>" + "<li>Require multiple ("
+               + "<li>Converted to DNS resolution from socket-based<br/> detection via DNSJava</li>"
+               + "<li>Added list of top sites and nameservers to cycle through</li>" + "<li>Require multiple ("
                + successesAfterFailRequired + ") successes before cycling to UP</li>" + "<li>Cycle faster ("
                + failingTestIntervalSeconds + " sec) while down</li>"
-               + "<li>(Optional) Sound plays when disconnected/reconnected</li>"
-               + "<li>(Optional) URL accessed when disconnected/reconnected</li>"
+               + "<li>(Optional) Sound plays when disconnected / reconnected</li>"
+               + "<li>(Optional) URL accessed when disconnected / reconnected</li>"
                + "<li>Altered outage sound file and volume</li>" + "<li>Made UI smaller</li>"
-               + "<li>Separate outage logging and \"Debug\" logging</li>" + "</ul><br>"
+               + "<li>Separate outage logging and \"Debug\" logging</li>" 
+			   + "</ul><br>"
                + "For more info and the latest version of icm visit:<br>"
                + "<a href='https://github.com/nathanwray/icm' style='text-decoration: none'>https://github.com/nathanwray/icm</a><br><br>"
                + "icm is a hard fork of Internet Connectivity Monitor 1.41 by <b>Genc Alikaj</b><br>"
                + "</body></html>";
 
-         JOptionPane.showMessageDialog(null, aboutMessage, "About Internet Connectivity Monitor",
+         JOptionPane.showMessageDialog(null, aboutMessage, "About "+projectName,
                JOptionPane.INFORMATION_MESSAGE);
 
       }
