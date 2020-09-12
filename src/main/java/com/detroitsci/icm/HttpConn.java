@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Date;
 
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
+
 import org.xbill.DNS.Cache;
 import org.xbill.DNS.ExtendedResolver;
 import org.xbill.DNS.Lookup;
@@ -27,10 +30,12 @@ public class HttpConn implements Runnable {
    // private String address;
    private int addressOffset = 0;
    private Date downSince = null;
+   private static final int FAILS_REQ = 2;
+   private int failures = 0;
 
    // beta testing this, it's not going well
    // (many false negatives; walmart, apple, ebay all seem to fail this 100%)
-   private boolean testReachable = false;
+   // private boolean testReachable = false;
 
    private static final int REACHABLE_MAX_WAIT_MILLIS = 5000;
 
@@ -56,8 +61,8 @@ public class HttpConn implements Runnable {
       cache.setMaxEntries(0);
       try {
          resolver = new ExtendedResolver(UserInterface.nameservers);
-         resolver.setRetries(2);
-         resolver.setTimeout(3, 0);
+         resolver.setRetries(3);
+         resolver.setTimeout(UserInterface.nameservers.length * 3, 0);
          resolver.setLoadBalance(true);
          resolver.setTCP(true);
       } catch (UnknownHostException uhe) {
@@ -68,13 +73,27 @@ public class HttpConn implements Runnable {
       while (runFlag == 0) {
          long startedAt = new Date().getTime();
          StartTest();
-         long frequencyMilliseconds = UserInterface.DISCONNECTEDPRIMARYSITE == (byte) 1
-               ? (UserInterface.failingTestIntervalSeconds * 1000)
+         long frequencyMilliseconds = failures > 0 ? (UserInterface.failingTestIntervalSeconds * 1000)
                : (UserInterface.defaultTestIntervalSeconds * 1000);
+
+         int rows = UserInterface.DEBUG_OUTPUT.getText().split(UserInterface.LSEP).length;
+         if (rows > UserInterface.DEBUG_MAX_ROWS) {
+            try {
+               UserInterface.DEBUG_OUTPUT.replaceRange("", 0,
+                     UserInterface.DEBUG_OUTPUT.getLineEndOffset(rows - UserInterface.DEBUG_RESET_ROWS));
+               ((DefaultCaret) UserInterface.DEBUG_OUTPUT.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+            } catch (BadLocationException ble) {
+               UserInterface.DEBUG_OUTPUT.append("BLE trimming debug area? " + ble + UserInterface.LSEP);
+            }
+         }
 
          // wait a few seconds before repeating the process. The waiting time is defined
          // by the user (in the "frequency" field). Subtract the time spent testing.
          long waitMilliseconds = Math.max(frequencyMilliseconds - (new Date().getTime() - startedAt), 0L);
+
+         UserInterface.DEBUG_OUTPUT
+               .append(" (" + (frequencyMilliseconds - waitMilliseconds) + "ms)" + UserInterface.LSEP);
+
          try {
             Thread.sleep(waitMilliseconds);
          } catch (Exception ex) {
@@ -90,7 +109,7 @@ public class HttpConn implements Runnable {
 
    // web address mutator
    public void setTestReachable(boolean shouldTest) {
-      testReachable = shouldTest;
+      // testReachable = shouldTest;
    }
 
    public String getNextAddress() {
@@ -108,50 +127,71 @@ public class HttpConn implements Runnable {
 
          // define URL and try to connect to server
          // InetAddress ip = InetAddress.getByName(new URL(address).getHost());
-         Lookup lookup = new Lookup(address);
+         Record[] records = null;
+         // int attempt = 0;
+         int result = Lookup.UNRECOVERABLE;
+         Lookup lookup = null;
+
+         // do {
+         // attempt++;
+         lookup = new Lookup(address);
          lookup.setResolver(resolver);
          lookup.setCache(cache);
-         Record[] records = lookup.run();
-         int result = lookup.getResult();
+         records = lookup.run();
+         result = lookup.getResult();
+
+         // UserInterface.DEBUG_OUTPUT.append(result == Lookup.HOST_NOT_FOUND ? "(hnf)" :
+         // ".");
+         // } while (attempt < (3 + 1) && (result != Lookup.SUCCESSFUL || records ==
+         // null));
+
          if (result != Lookup.SUCCESSFUL) {
             throw new IOException(lookup.getErrorString());
          } else if (records == null) {
             throw new IOException("No records found");
          }
-         UserInterface.DEBUG_OUTPUT.append("Address for " + address + " is " + records[0].rdataToString() + UserInterface.LSEP);
+
+         UserInterface.DEBUG_OUTPUT.append(address + " is " + records[0].rdataToString());
 
          if (UserInterface.primaryResumeSuccessesRemaining > 0) {
             UserInterface.primaryResumeSuccessesRemaining--;
-         } else if (downSince != null) {
-            String date = String.format("%ta %<tb %<td %<tT", downSince);
-            long downSeconds = (new Date().getTime() - downSince.getTime()) / 1000;
+         } else {
+            if (UserInterface.DISCONNECTEDPRIMARYSITE == 1) {
+               String date = String.format("%ta %<tb %<td %<tT", downSince);
+               long downSeconds = (new Date().getTime() - downSince.getTime()) / 1000;
 
-            UserInterface.OUTPUT.append(date + ": system down " + downSeconds + " seconds" + UserInterface.LSEP);
-            // write or update the automatic log file if the option is selected
-            AutoWriteLogFile();
-
+               UserInterface.OUTPUT.append(date + ": system down " + downSeconds + " seconds" + UserInterface.LSEP);
+               // write or update the automatic log file if the option is selected
+               AutoWriteLogFile();
+               UserInterface.DISCONNECTEDPRIMARYSITE = 0;
+            }
             downSince = null;
-            UserInterface.DISCONNECTEDPRIMARYSITE = 0;
+            failures = 0;
          }
 
          // perform a disconnection counter check
          disconnectionObject.run();
 
       } catch (Exception e) {
-         UserInterface.DEBUG_OUTPUT.append("Exception testing " + address + ": " + e + UserInterface.LSEP);
+         UserInterface.DEBUG_OUTPUT.append("Exception testing " + address + ": " + e);
 
          if (downSince == null) {
             downSince = new Date();
          }
-         UserInterface.primaryResumeSuccessesRemaining = UserInterface.successesAfterFailRequired;
 
-         // announce to the disconnection flag that the connection was unsuccessful
-         // if (objectName == "Primary") {
-         UserInterface.DISCONNECTEDPRIMARYSITE = 1;
+         failures++;
 
-         // perform a disconnection counter check
-         disconnectionObject.stopAudioFile();
-         disconnectionObject.run();
+         if (failures >= FAILS_REQ) {
+            UserInterface.primaryResumeSuccessesRemaining = UserInterface.successesAfterFailRequired;
+
+            // announce to the disconnection flag that the connection was unsuccessful
+            // if (objectName == "Primary") {
+            UserInterface.DISCONNECTEDPRIMARYSITE = 1;
+
+            // perform a disconnection counter check
+            disconnectionObject.stopAudioFile();
+            disconnectionObject.run();
+         }
       }
    }
 

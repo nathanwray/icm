@@ -51,8 +51,8 @@ public class UserInterface {
 
    public static String[] dnsTestUrls;
    public static String[] nameservers;
-public static String buildVersion;
-public static String projectName;
+   public static String buildVersion;
+   public static String projectName;
    // PROPERTIES
 
    public static int primaryResumeSuccessesRemaining = 0;
@@ -131,6 +131,8 @@ public static String projectName;
 
    private static String startupLog = "";
    public static final String LSEP = System.getProperty("line.separator");
+   public static final int DEBUG_MAX_ROWS = 10000;
+   public static final int DEBUG_RESET_ROWS = 8000;
 
    // here is where everything starts
    public static void main(String[] args) {
@@ -176,8 +178,7 @@ public static String projectName;
          }
       }
 
-      if (p.containsKey("defaultTestIntervalSeconds"))
-      {
+      if (p.containsKey("defaultTestIntervalSeconds")) {
          try {
             defaultTestIntervalSeconds = Integer.parseInt(p.getProperty("defaultTestIntervalSeconds"));
          } catch (NumberFormatException nfe) {
@@ -234,11 +235,12 @@ public static String projectName;
 
       if (p.containsKey("nameservers")) {
          nameservers = Arrays.stream(p.getProperty("nameservers").split(",")).map(String::trim).toArray(String[]::new);
-         startupLog += "Using " + nameservers.length + " nameservers from icm.properties" + LSEP;
+         startupLog += "Using " + nameservers.length + " nameservers from icm.properties:" + LSEP;
+         Arrays.asList(nameservers).forEach((dns) -> startupLog += "   " + dns + LSEP);
       } else {
          startupLog += "! No nameservers found in icm.properties" + LSEP;
       }
-	  
+
       if (p.containsKey("buildVersion")) {
          buildVersion = p.getProperty("buildVersion");
       }
@@ -261,7 +263,7 @@ public static String projectName;
 
       // format user interface elements
 
-	frame =   new JFrame(projectName + " v" + buildVersion);
+      frame = new JFrame(projectName + " v" + buildVersion);
 
       lblDisconnectionsLabel.setFont(new Font("Arial", Font.PLAIN, 18));
       lblDisconnectionsLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -407,8 +409,6 @@ public static String projectName;
 
          btnMonitor.setText("Pause Monitoring");
          OUTPUT.append("Monitoring started " + String.format("%ta %<tb %<td %<tT", new Date()) + LSEP);
-
-         Arrays.asList(nameservers).forEach((dns) -> DEBUG_OUTPUT.append("Using name server: " + dns + LSEP));
 
          CHKPLAYSOUND.setEnabled(false);
          CHKPLAYSOUNDLOOP.setEnabled(false);
@@ -559,8 +559,9 @@ public static String projectName;
 
          // show message box with application version information
 
-         String aboutMessage = "<html><body><H4>"+projectName+" v"+buildVersion+"</H4>" + "Changes since fork:<br>"
-               + "<ul>" + "<li>Removed second thread</li>" + "<li>Added UP/DOWN UI element</li>"
+         String aboutMessage = "<html><body><H4>" + projectName + " v" + buildVersion + "</H4>"
+               + "Changes since fork:<br>" + "<ul>" + "<li>Removed second thread</li>"
+               + "<li>Added UP/DOWN UI element</li>"
                + "<li>Converted to DNS resolution from socket-based<br/> detection via DNSJava</li>"
                + "<li>Added list of top sites and nameservers to cycle through</li>" + "<li>Require multiple ("
                + successesAfterFailRequired + ") successes before cycling to UP</li>" + "<li>Cycle faster ("
@@ -568,15 +569,13 @@ public static String projectName;
                + "<li>(Optional) Sound plays when disconnected / reconnected</li>"
                + "<li>(Optional) URL accessed when disconnected / reconnected</li>"
                + "<li>Altered outage sound file and volume</li>" + "<li>Made UI smaller</li>"
-               + "<li>Separate outage logging and \"Debug\" logging</li>" 
-			   + "</ul><br>"
+               + "<li>Separate outage logging and \"Debug\" logging</li>" + "</ul><br>"
                + "For more info and the latest version of icm visit:<br>"
                + "<a href='https://github.com/nathanwray/icm' style='text-decoration: none'>https://github.com/nathanwray/icm</a><br><br>"
                + "icm is a hard fork of Internet Connectivity Monitor 1.41 by <b>Genc Alikaj</b><br>"
                + "</body></html>";
 
-         JOptionPane.showMessageDialog(null, aboutMessage, "About "+projectName,
-               JOptionPane.INFORMATION_MESSAGE);
+         JOptionPane.showMessageDialog(null, aboutMessage, "About " + projectName, JOptionPane.INFORMATION_MESSAGE);
 
       }
    }
