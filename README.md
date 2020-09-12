@@ -6,7 +6,7 @@ Values, sound clips and urls are configurable in the properties file. By default
 
 The GET endpoint settings can be used as home automation hooks, either notifying you of the outage or activating a backup router. Make sure these URLs are available on your local network.<br/>
 
-DNS resolution is via the DNSJava library and (by default) uses Google, Cloudflare, Quad9 and OpenDNS servers in rotation. Two 3-second attempts are made to resolve the server names.
+DNS resolution is via the DNSJava library and (by default) uses Google, Cloudflare, Quad9 and OpenDNS servers in rotation. 
 <br/>
 <p/>
 
