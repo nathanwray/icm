@@ -4,7 +4,7 @@
 	<artifactId>icm</artifactId>
 	<!-- Output to jar format -->
 	<packaging>jar</packaging>
-	<version>2.1.0</version>
+	<version>2.1.1</version>
 	<name>Internet Connectivity Monitoring</name>
 	<description>DNS-based Internet Connectivity Monitoring, monitors your internet connection and logs each outage with options for logging, notification and alerting</description>
 	<properties>
